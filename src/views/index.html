@@ -1,0 +1,18 @@
+<html>
+  <body>
+    <canvas id='test_canvas' width='1280px' height='960px' style='border:1px solid #d3d3d3'>
+    </canvas>
+    <script language="JavaScript">
+      var ctx = document.getElementById('test_canvas').getContext('2d');
+      var img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0);
+      };
+      var theDate = new Date();
+      img.src = "http://152.136.213.16:8001/video/pull";
+　　　 window.setInterval("refreshCanvas()", 10);
+　　　　function refreshCanvas(){
+  　　　　ctx.drawImage(img, 0, 0);
+//   console.log(img.complete)
+　　　 };
+</script> <br></body> <br></html>
