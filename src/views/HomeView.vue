@@ -1,12 +1,13 @@
 <template>
   <!-- <videoPlayer ref="videoPlayer" :options="playerOptions" class="vjs-custom-skin videoPlayer" :playsinline="true" />-->
-  <img id="img" src="http://152.136.213.16:8001/video/pull" />
+  <!-- <img id="img" src="http://152.136.213.16:8001/video/pull" /> -->
+  <img id="img" src="" />
 
   <!-- <canvas id='test_canvas' width='640px' height='480px' style='border:1px solid #d3d3d3'>
   </canvas> -->
 </template>
 <script setup>
-import { onMounted } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 // import { VideoTrans } from '../api/videotrans'
 
 // const formMethod = () => {
@@ -58,12 +59,17 @@ const indexOfSOI = (array) => {
   }
   return -1;
 }
+
+// 读取数据流
 const readStream = () => {
+  console.log("enter readStream")
   reader.read().then(({ done, value }) => {
+    console.log("enter reader done value", done, value)
     if (done) {
       // 如果流已经结束，返回
       return;
     }
+    console.log("value", value)
     // 否则，继续处理数据
     const data = new Uint8Array(value);
     const index = indexOfSOI(data);
@@ -79,6 +85,70 @@ const readStream = () => {
   });
 }
 
+// 流式接收数据函数
+const getStreamData = () => {
+  fetch("http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test")
+    .then((response) => {
+      // 获取可读流
+      const stream = response.body;
+      console.log(stream)
+      // 获取读取器a
+      reader = stream.getReader();
+      // 递归地从流中读取数据
+      readStream();
+    })
+    .catch((error) => {
+      // 处理错误情况
+      console.error(error);
+    });
+
+    // fetch("http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test")
+    // // Retrieve its body as ReadableStream
+    // .then((response) => {
+    //   const reader = response.body.getReader();
+    //   console.log("reader", reader)
+    //   return new ReadableStream({
+    //     start(controller) {
+    //       return pump();
+    //       function pump() {
+    //         return reader.read().then(({ done, value }) => {
+    //           // When no more data needs to be consumed, close the stream
+    //           console.log(done, value)
+    //           if (done) {
+    //             controller.close();
+    //             return;
+    //           }
+    //           // Enqueue the next data chunk into our target stream
+    //           controller.enqueue(value);
+    //           return pump();
+    //         });
+    //       }
+    //     },
+    //   });
+    // })
+    // // Create a new response out of the stream
+    // .then((stream) => new Response(stream))
+    // // Create an object URL for the response
+    // .then((response) => response.blob())
+    // .then((blob) => {
+    //   console.log("blob", blob)
+    //   URL.createObjectURL(blob)
+    // })
+    // // Update image
+    // .then((url) => console.log((image.src = url)))
+    // .catch((err) => console.error(err));
+}
+
+// 记录鼠标坐标
+const point = ref({ x: 0, y: 0 })
+
+// 获取鼠标坐标
+const savePoint = (e) => {
+  point.value.x = e.pageX
+  point.value.y = e.pageY
+  console.log(point.value)
+}
+
 // @ is an alias to /src
 // import { ref } from 'vue'
 // import 'video.js/dist/video-js.css'
@@ -86,6 +156,8 @@ const readStream = () => {
 // import { videoPlayer } from 'vue-video-player'
 // import 'videojs-flash'
 onMounted(() => {
+  window.addEventListener('click', savePoint)
+  getStreamData()
   // var imgEl = document.getElementById('image')
   // imgEl.onload = function (e) {
   //   console.log(e, 'success')
@@ -101,20 +173,7 @@ onMounted(() => {
   //   console.log(err)
   // })
   // nbMethod()
-  fetch("http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test")
-    .then((response) => {
-      // 获取可读流
-      const stream = response.body;
-      console.log(stream)
-      // 获取读取器
-      reader = stream.getReader();
-      // 递归地从流中读取数据
-      readStream();
-    })
-    .catch((error) => {
-      // 处理错误情况
-      console.error(error);
-    });
+
 
 
   // var ctx = document.getElementById('test_canvas').getContext('2d');
@@ -129,6 +188,10 @@ onMounted(() => {
   // function refreshCanvas() {
   //   ctx.drawImage(img, 0, 0);
   // }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('click', savePoint)
 })
 
 // const refreshCanvas = () => {
