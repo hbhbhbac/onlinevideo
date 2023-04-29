@@ -1,13 +1,17 @@
 <template>
   <!-- <videoPlayer ref="videoPlayer" :options="playerOptions" class="vjs-custom-skin videoPlayer" :playsinline="true" />-->
   <!-- <img id="img" src="http://152.136.213.16:8001/video/pull" /> -->
-  <img id="img" src="" />
+  <!-- <img id="img" src="@/assets/logo.png" /> -->
 
-  <!-- <canvas id='test_canvas' width='640px' height='480px' style='border:1px solid #d3d3d3'>
-  </canvas> -->
+  <div class="main-wrap">
+    <canvas ref="canvas" height="600" width="600" style='border:1px solid #d3d3d3; '>
+    </canvas>
+  </div>
 </template>
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, nextTick } from 'vue';
+import EXIF from 'exif-js'
+// import LogoImg from '../assets/logo.png'
 // import { VideoTrans } from '../api/videotrans'
 
 // const formMethod = () => {
@@ -60,16 +64,19 @@ const indexOfSOI = (array) => {
   return -1;
 }
 
+// 实时记录url
+const imageUrl = ref('')
+const timeStamp = ref('')
+
 // 读取数据流
 const readStream = () => {
-  console.log("enter readStream")
   reader.read().then(({ done, value }) => {
-    console.log("enter reader done value", done, value)
+    // console.log("enter reader done value", done, value)
     if (done) {
       // 如果流已经结束，返回
       return;
     }
-    console.log("value", value)
+    // console.log("value", value)
     // 否则，继续处理数据
     const data = new Uint8Array(value);
     const index = indexOfSOI(data);
@@ -77,21 +84,74 @@ const readStream = () => {
       const blob = new Blob([data.slice(index)], {
         type: "image/jpeg",
       });
+      // console.log('blob', blob)
       stream = URL.createObjectURL(blob);
-      document.getElementById('img').src = stream;
+      // document.getElementById('img').src = stream;
+      imageUrl.value = stream
     }
     // 再次调用自身函数，继续读取数据
     readStream();
   });
 }
 
+
+const canvas = ref()
+const ctx = ref(null)
+// const img = ref(null)
+const timer = ref(0)
+// var ctx = document.getElementById('test_canvas').getContext('2d');
+
+// 画布函数
+const drawCanvas = () => {
+  // console.log('createTimer')
+  ctx.value = canvas.value.getContext('2d')
+
+  timer.value = window.setInterval(function refreshCanvas() {
+    var img = new Image();
+    img.src = imageUrl.value;
+
+    try {
+      img.onload = () => {
+        // console.log('loadsuncess')
+        // 使用 exif-js 库解析图像的 EXIF 数据
+        EXIF.getData(img, function () {
+          const exifData = EXIF.getAllTags(this, "DateTime");
+          timeStamp.value = exifData.DateTime
+          // resolve(exifData);
+          console.log('时间戳', exifData.DateTime)
+        })
+        ctx.value.drawImage(img, 0, 0);
+        // console.log(ctx.value)
+      };
+    } catch (error) {
+      // 异常处理代码
+      console.log('异常:', error);
+      // 根据需要进行错误处理，例如显示错误信息给用户
+      // errorMessage.value = '发生了一个异常，请稍后重试';
+    }
+    // console.log('timer',img.value)
+    // ctx.value.drawImage(img.value, 0, 0, 400, 500);
+    // console.log(canvas.value)
+  }, 30);
+}
+
+const imgSrcTimer = ref(0)
+
+// 设置更新计时器 不行 会出现闪烁
+// const setIamgeSrcTimer = () => {
+//   imgSrcTimer.value = window.setInterval(() => {
+//     document.getElementById('img').src = imageUrl.value
+//   }, 1);
+// }
+
 // 流式接收数据函数
 const getStreamData = () => {
-  fetch("http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test")
+  http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test
+  fetch("http://127.0.0.1:8000/video/pull")
     .then((response) => {
       // 获取可读流
       const stream = response.body;
-      console.log(stream)
+      // console.log(stream)
       // 获取读取器a
       reader = stream.getReader();
       // 递归地从流中读取数据
@@ -102,41 +162,39 @@ const getStreamData = () => {
       console.error(error);
     });
 
-    // fetch("http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test")
-    // // Retrieve its body as ReadableStream
-    // .then((response) => {
-    //   const reader = response.body.getReader();
-    //   console.log("reader", reader)
-    //   return new ReadableStream({
-    //     start(controller) {
-    //       return pump();
-    //       function pump() {
-    //         return reader.read().then(({ done, value }) => {
-    //           // When no more data needs to be consumed, close the stream
-    //           console.log(done, value)
-    //           if (done) {
-    //             controller.close();
-    //             return;
-    //           }
-    //           // Enqueue the next data chunk into our target stream
-    //           controller.enqueue(value);
-    //           return pump();
-    //         });
-    //       }
-    //     },
-    //   });
-    // })
-    // // Create a new response out of the stream
-    // .then((stream) => new Response(stream))
-    // // Create an object URL for the response
-    // .then((response) => response.blob())
-    // .then((blob) => {
-    //   console.log("blob", blob)
-    //   URL.createObjectURL(blob)
-    // })
-    // // Update image
-    // .then((url) => console.log((image.src = url)))
-    // .catch((err) => console.error(err));
+  // fetch("http://127.0.0.1:8000/video/pull")
+  // // Retrieve its body as ReadableStream
+  // .then((response) => {
+  //   const reader = response.body.getReader();
+  //   console.log("reader", reader)
+  //   return new ReadableStream({
+  //     start(controller) {
+  //       return pump();
+  //       function pump() {
+  //         return reader.read().then(({ done, value }) => {
+  //           // When no more data needs to be consumed, close the stream
+  //           console.log(done, value)
+  //           if (done) {
+  //             controller.close();
+  //             return;
+  //           }
+  //           // Enqueue the next data chunk into our target stream
+  //           controller.enqueue(value);
+  //           return pump();
+  //         });
+  //       }
+  //     },
+  //   });
+  // })
+  // // Create a new response out of the stream
+  // .then((stream) => new Response(stream))
+  // // Create an object URL for the response
+  // .then((response) => response.blob())
+  // .then((blob) => 
+  //   URL.createObjectURL(blob))
+  // // Update image
+  // .then((url) => console.log((document.getElementById('img').src = url)))
+  // .catch((err) => console.error(err));
 }
 
 // 记录鼠标坐标
@@ -156,8 +214,18 @@ const savePoint = (e) => {
 // import { videoPlayer } from 'vue-video-player'
 // import 'videojs-flash'
 onMounted(() => {
+  // nextTick(() => {
+  //   var imgEntity = document.getElementById('img')
+  //   EXIF.getData(imgEntity, function () {
+  //     const exifData = EXIF.getTag(this, "DateTimeOriginal");
+  //     // resolve(exifData);
+  //     console.log('时间戳', exifData)
+  //   });
+  // })
   window.addEventListener('click', savePoint)
   getStreamData()
+  // setIamgeSrcTimer()
+  drawCanvas()
   // var imgEl = document.getElementById('image')
   // imgEl.onload = function (e) {
   //   console.log(e, 'success')
@@ -192,6 +260,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('click', savePoint)
+  window.clearInterval(imgSrcTimer.value)
+  window.clearInterval(timer.value)
 })
 
 // const refreshCanvas = () => {
@@ -222,3 +292,11 @@ onBeforeUnmount(() => {
 //   }
 // })
 </script>
+<style coped>
+.main-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+</style>
