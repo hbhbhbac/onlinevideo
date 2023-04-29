@@ -10,7 +10,8 @@
 </template>
 <script setup>
 import { onBeforeUnmount, onMounted, ref, nextTick } from 'vue';
-import EXIF from 'exif-js'
+// import EXIF from 'exif-js'
+import exifr from 'exifr'
 // import LogoImg from '../assets/logo.png'
 // import { VideoTrans } from '../api/videotrans'
 
@@ -111,15 +112,20 @@ const drawCanvas = () => {
     img.src = imageUrl.value;
 
     try {
-      img.onload = () => {
+      img.onload = async () => {
         // console.log('loadsuncess')
         // 使用 exif-js 库解析图像的 EXIF 数据
-        EXIF.getData(img, function () {
-          const exifData = EXIF.getAllTags(this, "DateTime");
-          timeStamp.value = exifData.DateTime
-          // resolve(exifData);
-          console.log('时间戳', exifData.DateTime)
-        })
+        // EXIF.getData(img, function () {
+        //   const exifData = EXIF.getAllTags(this);
+        //   timeStamp.value = exifData.DateTime
+        //   // resolve(exifData);
+        //   console.log('时间戳', exifData.DateTime)
+        // })
+        exifr.parse(img).then(exifData => {
+          // 处理 exifData
+          timeStamp.value = exifData.ModifyDate
+          console.log('时间戳', exifData.ModifyDate)
+        });
         ctx.value.drawImage(img, 0, 0);
         // console.log(ctx.value)
       };
