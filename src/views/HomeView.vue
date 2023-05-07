@@ -4,7 +4,7 @@
   <!-- <img id="img" src="@/assets/logo.png" /> -->
 
   <div class="main-wrap">
-    <canvas ref="canvas" height="500" width="600" style='border:1px solid #d3d3d3; '>
+    <canvas ref="canvas" height="500" width="1000" style='border:1px solid #d3d3d3; '>
     </canvas>
   </div>
 </template>
@@ -52,6 +52,7 @@ import exifr from 'exifr'
 var reader = null
 var stream = null
 var SOI = new Uint8Array([0xff, 0xd8])
+var EOI = new Uint8Array([0xff, 0xd9])
 // 寻找图像开始的标志
 const indexOfSOI = (array) => {
   for (let i = 0; i < array.length - 1; i++) {
@@ -76,6 +77,8 @@ const readStream = () => {
       // 如果流已经结束，返回
       return;
     }
+    var date = new Date()
+    // console.log(value, 'value的长度', value.length, date.getTime())
     // 否则，继续处理数据
     const data = new Uint8Array(value);
     const index = indexOfSOI(data);
