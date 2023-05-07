@@ -95,6 +95,7 @@ const readStream = () => {
   });
 }
 
+
 // 画布
 const canvas = ref()
 const ctx = ref(null)
@@ -147,7 +148,9 @@ const getStreamData = () => {
       // 获取读取器a
       reader = stream.getReader();
       // 递归地从流中读取数据
-      readStream();
+      // readStream();
+      // 循环地从流中读取数据
+      readStreamLoop()
     })
     .catch((error) => {
       // 处理错误情况
@@ -188,6 +191,31 @@ const getStreamData = () => {
   // .then((url) => console.log((document.getElementById('img').src = url)))
   // .catch((err) => console.error(err));
 }
+
+// 循环获取数据 避免长时间递归造成的信息爆栈
+async function readStreamLoop() {
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      // 如果流已经结束，跳出循环
+      break;
+    }
+    var date = new Date()
+    // console.log(value, 'value的长度', value.length, date.getTime())
+    // 否则，继续处理数据
+    const data = new Uint8Array(value);
+    const index = indexOfSOI(data);
+    if (index > -1) {
+      // 获取index之后的信息并转换为图像
+      const blob = new Blob([data.slice(index)], {
+        type: "image/jpeg",
+      });
+      stream = URL.createObjectURL(blob);
+      imageUrl.value = stream
+    }
+  }
+}
+
 
 // 记录鼠标坐标
 const point = ref({ x: 0, y: 0 })
