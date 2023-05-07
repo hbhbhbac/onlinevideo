@@ -4,13 +4,12 @@
   <!-- <img id="img" src="@/assets/logo.png" /> -->
 
   <div class="main-wrap">
-    <canvas ref="canvas" height="600" width="600" style='border:1px solid #d3d3d3; '>
+    <canvas ref="canvas" height="500" width="600" style='border:1px solid #d3d3d3; '>
     </canvas>
   </div>
 </template>
 <script setup>
 import { onBeforeUnmount, onMounted, ref, nextTick } from 'vue';
-// import EXIF from 'exif-js'
 import exifr from 'exifr'
 // import LogoImg from '../assets/logo.png'
 // import { VideoTrans } from '../api/videotrans'
@@ -53,6 +52,7 @@ import exifr from 'exifr'
 var reader = null
 var stream = null
 var SOI = new Uint8Array([0xff, 0xd8])
+// 寻找图像开始的标志
 const indexOfSOI = (array) => {
   for (let i = 0; i < array.length - 1; i++) {
     if (
@@ -65,29 +65,26 @@ const indexOfSOI = (array) => {
   return -1;
 }
 
-// 实时记录url
+// 实时记录url和时间戳
 const imageUrl = ref('')
 const timeStamp = ref('')
 
 // 读取数据流
 const readStream = () => {
   reader.read().then(({ done, value }) => {
-    // console.log("enter reader done value", done, value)
     if (done) {
       // 如果流已经结束，返回
       return;
     }
-    // console.log("value", value)
     // 否则，继续处理数据
     const data = new Uint8Array(value);
     const index = indexOfSOI(data);
     if (index > -1) {
+      // 获取index之后的信息并转换为图像
       const blob = new Blob([data.slice(index)], {
         type: "image/jpeg",
       });
-      // console.log('blob', blob)
       stream = URL.createObjectURL(blob);
-      // document.getElementById('img').src = stream;
       imageUrl.value = stream
     }
     // 再次调用自身函数，继续读取数据
@@ -95,16 +92,16 @@ const readStream = () => {
   });
 }
 
-
+// 画布
 const canvas = ref()
 const ctx = ref(null)
-// const img = ref(null)
+
+// 计时器 定时刷新画布
 const timer = ref(0)
 // var ctx = document.getElementById('test_canvas').getContext('2d');
 
-// 画布函数
+// 画布处理函数 每30ms绘制一次 并记录该图像的时间戳
 const drawCanvas = () => {
-  // console.log('createTimer')
   ctx.value = canvas.value.getContext('2d')
 
   timer.value = window.setInterval(function refreshCanvas() {
@@ -113,21 +110,12 @@ const drawCanvas = () => {
 
     try {
       img.onload = async () => {
-        // console.log('loadsuncess')
-        // 使用 exif-js 库解析图像的 EXIF 数据
-        // EXIF.getData(img, function () {
-        //   const exifData = EXIF.getAllTags(this);
-        //   timeStamp.value = exifData.DateTime
-        //   // resolve(exifData);
-        //   console.log('时间戳', exifData.DateTime)
-        // })
         exifr.parse(img).then(exifData => {
           // 处理 exifData
           timeStamp.value = exifData.ModifyDate
-          console.log('时间戳', exifData.ModifyDate)
+          // console.log('时间戳', exifData.ModifyDate)
         });
         ctx.value.drawImage(img, 0, 0);
-        // console.log(ctx.value)
       };
     } catch (error) {
       // 异常处理代码
@@ -135,13 +123,9 @@ const drawCanvas = () => {
       // 根据需要进行错误处理，例如显示错误信息给用户
       // errorMessage.value = '发生了一个异常，请稍后重试';
     }
-    // console.log('timer',img.value)
-    // ctx.value.drawImage(img.value, 0, 0, 400, 500);
-    // console.log(canvas.value)
   }, 30);
 }
 
-const imgSrcTimer = ref(0)
 
 // 设置更新计时器 不行 会出现闪烁
 // const setIamgeSrcTimer = () => {
@@ -157,7 +141,6 @@ const getStreamData = () => {
     .then((response) => {
       // 获取可读流
       const stream = response.body;
-      // console.log(stream)
       // 获取读取器a
       reader = stream.getReader();
       // 递归地从流中读取数据
@@ -211,26 +194,16 @@ const savePoint = (e) => {
   point.value.x = e.pageX
   point.value.y = e.pageY
   console.log(point.value)
+  console.log(timeStamp.value)
 }
 
-// @ is an alias to /src
-// import { ref } from 'vue'
-// import 'video.js/dist/video-js.css'
-// import 'vue-video-player/src/custom-theme.css'
-// import { videoPlayer } from 'vue-video-player'
-// import 'videojs-flash'
 onMounted(() => {
-  // nextTick(() => {
-  //   var imgEntity = document.getElementById('img')
-  //   EXIF.getData(imgEntity, function () {
-  //     const exifData = EXIF.getTag(this, "DateTimeOriginal");
-  //     // resolve(exifData);
-  //     console.log('时间戳', exifData)
-  //   });
-  // })
+  // 监听鼠标
   window.addEventListener('click', savePoint)
+  // 获取并处理数据流
   getStreamData()
   // setIamgeSrcTimer()
+  // 设置画布处理器
   drawCanvas()
   // var imgEl = document.getElementById('image')
   // imgEl.onload = function (e) {
