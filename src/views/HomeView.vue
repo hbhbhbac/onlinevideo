@@ -4,12 +4,13 @@
   <!-- <img id="img" src="@/assets/logo.png" /> -->
 
   <div class="main-wrap">
-    <canvas ref="canvas" height="500" width="1000" style='border:1px solid #d3d3d3; '>
+    <canvas ref="canvas" height="500" width="1200" style='border:1px solid #d3d3d3; ' id="video-canvas">
     </canvas>
   </div>
 </template>
 <script setup>
 import { onBeforeUnmount, onMounted, ref, nextTick } from 'vue';
+import { VideoTrans } from '@/api/videotrans';
 import exifr from 'exifr'
 // import LogoImg from '../assets/logo.png'
 // import { VideoTrans } from '../api/videotrans'
@@ -138,6 +139,23 @@ const drawCanvas = () => {
 //   }, 1);
 // }
 
+// 点击事件发生 修改行李箱状态
+const clickVideo = (type) => {
+  var data = {
+    frameId: timeStamp.value,
+    result: type,
+    height: point.value.y,
+    width: point.value.x
+  }
+
+  VideoTrans.ClickVideo(data).then((res) => {
+    console.log('点击视频后端接收到的参数', data, '后端返回的结果', res)
+  }).catch((err) => {
+    console.log(err)
+    window.alert('出错了！' + err)
+  })
+}
+
 // 流式接收数据函数
 const getStreamData = () => {
   http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test
@@ -212,30 +230,73 @@ async function readStreamLoop() {
       });
       stream = URL.createObjectURL(blob);
       imageUrl.value = stream
+
+      // 根据后端传输的速率绘制画布
+      drawCanvasAccrodingBackEnd()
     }
+  }
+}
+
+// 绘制画布 不设置计时器 根据后端的传递速率设置绘制的频率
+const drawCanvasAccrodingBackEnd = () => {
+  var img = new Image();
+  img.src = imageUrl.value;
+
+  try {
+    img.onload = async () => {
+      exifr.parse(img).then(exifData => {
+        // 处理 exifData
+        timeStamp.value = exifData.ModifyDate
+        // console.log('时间戳', exifData.ModifyDate)
+      });
+      ctx.value.drawImage(img, 0, 0);
+    };
+  } catch (error) {
+    // 异常处理代码
+    console.log('异常:', error);
+    // 根据需要进行错误处理，例如显示错误信息给用户
+    // errorMessage.value = '发生了一个异常，请稍后重试';
   }
 }
 
 
 // 记录鼠标坐标
-const point = ref({ x: 0, y: 0 })
+const point = ref({ x: 0, y: 0, type: 'NORMAL' })
 
 // 获取鼠标坐标
 const savePoint = (e) => {
+  e.preventDefault() // 阻止默认右键菜单的弹出
+
   point.value.x = e.pageX
   point.value.y = e.pageY
+  point.value.type = e.button == 0 ? 'NORMAL' : 'DOUBTFUL'
+
+  if(e.button == 0) clickVideo('NORMAL')
+  else clickVideo('DOUBTFUL')
+  
+  console.log(e.button)
   console.log(point.value)
   console.log(timeStamp.value)
 }
 
+// 阻止默认右键菜单的弹出
+const preventContextMenu = (e) => {
+  e.preventDefault()
+}
+
+
 onMounted(() => {
-  // 监听鼠标
-  window.addEventListener('click', savePoint)
+  // 监听鼠标 在canvas元素中监听
+  const videoElement = document.getElementById('video-canvas')
+  videoElement.addEventListener('mousedown', savePoint)
+  videoElement.addEventListener('contextmenu', preventContextMenu)
   // 获取并处理数据流
   getStreamData()
   // setIamgeSrcTimer()
-  // 设置画布处理器
-  drawCanvas()
+  // 设置画布处理器 计时器版本 每30ms一次渲染
+  // drawCanvas()
+  // 不设置计时器 根据后端传递的频率渲染画布
+  ctx.value = canvas.value.getContext('2d')
   // var imgEl = document.getElementById('image')
   // imgEl.onload = function (e) {
   //   console.log(e, 'success')
@@ -269,7 +330,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('click', savePoint)
+  // window.removeEventListener('click', savePoint)
   window.clearInterval(imgSrcTimer.value)
   window.clearInterval(timer.value)
 })

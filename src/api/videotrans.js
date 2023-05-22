@@ -1,6 +1,7 @@
 import service from "../http/request";
 const url = {
-    video: '/video/pull?stream_type=VIDEO&url=rtmp://152.136.213.16:1935/live/1111',
+    clickVideo: '/api/video/check',
+    getLuggageList: '/api/luggage/page/list'
 }
 // 详细参考见：https://www.axios-http.cn/docs/req_config
 export class VideoTrans {
@@ -32,6 +33,24 @@ export class VideoTrans {
             },
             // 这里是 data: data的简写
             data
-            });
+        });
+    }
+
+    static async ClickVideo(param) {
+        return service(url.clickVideo, {
+            // 方法，默认为 get
+            method: "get",
+            // 这里是 data: data的简写
+            params: param
+        });
+    }
+
+    static async GetLuggageList(param) {
+        return service(url.getLuggageList, {
+            // 方法，默认为 get
+            method: "get",
+            // 这里是 data: data的简写
+            params: param
+        });
     }
 }
