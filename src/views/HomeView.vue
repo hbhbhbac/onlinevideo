@@ -4,7 +4,7 @@
   <!-- <img id="img" src="@/assets/logo.png" /> -->
 
   <div class="main-wrap">
-    <canvas ref="canvas" height="500" width="1200" style='border:1px solid #d3d3d3; ' id="video-canvas">
+    <canvas ref="canvas" height="1080" width="1920" style='border:1px solid #d3d3d3; ' id="video-canvas">
     </canvas>
   </div>
 </template>
@@ -159,7 +159,7 @@ const clickVideo = (type) => {
 // 流式接收数据函数
 const getStreamData = () => {
   http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test
-  fetch("http://152.136.213.16/video/pull")
+  fetch("http://152.136.213.16/api/video/pull")
     .then((response) => {
       // 获取可读流
       const stream = response.body;
@@ -246,7 +246,7 @@ const drawCanvasAccrodingBackEnd = () => {
     img.onload = async () => {
       exifr.parse(img).then(exifData => {
         // 处理 exifData
-        timeStamp.value = exifData.ModifyDate
+        timeStamp.value = exifData.DocumentName
         // console.log('时间戳', exifData.ModifyDate)
       });
       ctx.value.drawImage(img, 0, 0);
