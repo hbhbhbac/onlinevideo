@@ -159,7 +159,7 @@ const clickVideo = (type) => {
 // 流式接收数据函数
 const getStreamData = () => {
   http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test
-  fetch("http://127.0.0.1:8000/video/pull")
+  fetch("http://152.136.213.16/video/pull")
     .then((response) => {
       // 获取可读流
       const stream = response.body;
