@@ -54,7 +54,7 @@ var reader = null
 var stream = null
 var SOI = new Uint8Array([0xff, 0xd8])
 var EOI = new Uint8Array([0xff, 0xd9])
-var TimerMode = true
+var TimerMode = false
 // 寻找图像开始的标志
 const indexOfSOI = (array) => {
   for (let i = 0; i < array.length - 1; i++) {
@@ -160,7 +160,7 @@ const clickVideo = (type) => {
 // 流式接收数据函数
 const getStreamData = () => {
   http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test
-  fetch("http://152.136.213.16/api/video/pull")
+  fetch("http://127.0.0.1:8000/api/video/pull?url=test.mp4")
     .then((response) => {
       // 获取可读流
       const stream = response.body;

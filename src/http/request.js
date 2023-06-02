@@ -1,7 +1,7 @@
 import axios from 'axios';
 // const globalStore = useGlobalStore();
 const service = axios.create({
-    baseURL: "http://152.136.213.16",
+    baseURL: "http://127.0.0.1:8000",
     // 不进行超时中断
     timeout: 0,
 })
