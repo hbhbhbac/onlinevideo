@@ -123,7 +123,7 @@ const drawCanvas = () => {
       img.onload = async () => {
         exifr.parse(img).then(exifData => {
           // 处理 exifData
-          timeStamp.value = exifData.ModifyDate
+          timeStamp.value = exifData.DocumentName
           var b = new Date()
           // console.log(b.getTime())
           // console.log('时间戳', exifData.ModifyDate)
@@ -155,7 +155,7 @@ const clickVideo = (type) => {
     height: point.value.y,
     width: point.value.x
   }
-
+  console.log(data)
   VideoTrans.ClickVideo(data).then((res) => {
     console.log('点击视频后端接收到的参数', data, '后端返回的结果', res)
   }).catch((err) => {
