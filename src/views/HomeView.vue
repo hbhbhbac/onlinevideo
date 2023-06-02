@@ -54,6 +54,7 @@ var reader = null
 var stream = null
 var SOI = new Uint8Array([0xff, 0xd8])
 var EOI = new Uint8Array([0xff, 0xd9])
+var TimerMode = true
 // 寻找图像开始的标志
 const indexOfSOI = (array) => {
   for (let i = 0; i < array.length - 1; i++) {
@@ -168,7 +169,9 @@ const getStreamData = () => {
       // 递归地从流中读取数据
       // readStream();
       // 循环地从流中读取数据
-      readStreamLoop()
+      if(!TimerMode) {
+        readStreamLoop()
+      }
     })
     .catch((error) => {
       // 处理错误情况
@@ -290,13 +293,18 @@ onMounted(() => {
   const videoElement = document.getElementById('video-canvas')
   videoElement.addEventListener('mousedown', savePoint)
   videoElement.addEventListener('contextmenu', preventContextMenu)
+  if(!TimerMode) {
+    ctx.value = canvas.value.getContext('2d')
+  }
   // 获取并处理数据流
   getStreamData()
   // setIamgeSrcTimer()
   // 设置画布处理器 计时器版本 每30ms一次渲染
+  if(TimerMode) {
+    drawCanvas()
+  }
   // drawCanvas()
   // 不设置计时器 根据后端传递的频率渲染画布
-  ctx.value = canvas.value.getContext('2d')
   // var imgEl = document.getElementById('image')
   // imgEl.onload = function (e) {
   //   console.log(e, 'success')
