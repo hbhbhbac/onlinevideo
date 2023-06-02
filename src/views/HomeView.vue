@@ -3,9 +3,11 @@
   <!-- <img id="img" src="http://152.136.213.16:8001/video/pull" /> -->
   <!-- <img id="img" src="@/assets/logo.png" /> -->
 
+
   <div class="main-wrap">
     <canvas ref="canvas" height="1080" width="1920" style='border:1px solid #d3d3d3; ' id="video-canvas">
     </canvas>
+    <!-- <img id="img" /> -->
   </div>
 </template>
 <script setup>
@@ -54,7 +56,7 @@ var reader = null
 var stream = null
 var SOI = new Uint8Array([0xff, 0xd8])
 var EOI = new Uint8Array([0xff, 0xd9])
-var TimerMode = false
+var TimerMode = true
 // 寻找图像开始的标志
 const indexOfSOI = (array) => {
   for (let i = 0; i < array.length - 1; i++) {
@@ -71,6 +73,7 @@ const indexOfSOI = (array) => {
 // 实时记录url和时间戳
 const imageUrl = ref('')
 const timeStamp = ref('')
+
 
 // 读取数据流
 const readStream = () => {
@@ -115,10 +118,14 @@ const drawCanvas = () => {
     img.src = imageUrl.value;
 
     try {
+      var a = new Date()
+      // console.log(a.getTime())
       img.onload = async () => {
         exifr.parse(img).then(exifData => {
           // 处理 exifData
           timeStamp.value = exifData.ModifyDate
+          var b = new Date()
+          // console.log(b.getTime())
           // console.log('时间戳', exifData.ModifyDate)
         });
         ctx.value.drawImage(img, 0, 0);
@@ -129,16 +136,16 @@ const drawCanvas = () => {
       // 根据需要进行错误处理，例如显示错误信息给用户
       // errorMessage.value = '发生了一个异常，请稍后重试';
     }
-  }, 30);
+  }, 10);
 }
 
-
+const imgSrcTimer = ref()
 // 设置更新计时器 不行 会出现闪烁
-// const setIamgeSrcTimer = () => {
-//   imgSrcTimer.value = window.setInterval(() => {
-//     document.getElementById('img').src = imageUrl.value
-//   }, 1);
-// }
+const setIamgeSrcTimer = () => {
+  imgSrcTimer.value = window.setInterval(() => {
+    document.getElementById('img').src = imageUrl.value
+  }, 30);
+}
 
 // 点击事件发生 修改行李箱状态
 const clickVideo = (type) => {
@@ -169,9 +176,7 @@ const getStreamData = () => {
       // 递归地从流中读取数据
       // readStream();
       // 循环地从流中读取数据
-      if(!TimerMode) {
-        readStreamLoop()
-      }
+      readStreamLoop()
     })
     .catch((error) => {
       // 处理错误情况
@@ -235,7 +240,9 @@ async function readStreamLoop() {
       imageUrl.value = stream
 
       // 根据后端传输的速率绘制画布
-      drawCanvasAccrodingBackEnd()
+      if (!TimerMode) {
+        drawCanvasAccrodingBackEnd()
+      }
     }
   }
 }
@@ -245,21 +252,29 @@ const drawCanvasAccrodingBackEnd = () => {
   var img = new Image();
   img.src = imageUrl.value;
 
-  try {
-    img.onload = async () => {
-      exifr.parse(img).then(exifData => {
-        // 处理 exifData
-        timeStamp.value = exifData.DocumentName
-        // console.log('时间戳', exifData.ModifyDate)
-      });
-      ctx.value.drawImage(img, 0, 0);
-    };
-  } catch (error) {
-    // 异常处理代码
-    console.log('异常:', error);
-    // 根据需要进行错误处理，例如显示错误信息给用户
-    // errorMessage.value = '发生了一个异常，请稍后重试';
-  }
+  img.onload = () => {
+    exifr.parse(img).then(exifData => {
+      // 处理 exifData
+      timeStamp.value = exifData.DocumentName
+      // console.log('时间戳', exifData.ModifyDate)
+    });
+    ctx.value.drawImage(img, 0, 0);
+  };
+  // try {
+  //   img.onload = async () => {
+  //     exifr.parse(img).then(exifData => {
+  //       // 处理 exifData
+  //       timeStamp.value = exifData.DocumentName
+  //       // console.log('时间戳', exifData.ModifyDate)
+  //     });
+  //     ctx.value.drawImage(img, 0, 0);
+  //   };
+  // } catch (error) {
+  //   // 异常处理代码
+  //   console.log('异常:', error);
+  //   // 根据需要进行错误处理，例如显示错误信息给用户
+  //   // errorMessage.value = '发生了一个异常，请稍后重试';
+  // }
 }
 
 
@@ -274,9 +289,9 @@ const savePoint = (e) => {
   point.value.y = e.pageY
   point.value.type = e.button == 0 ? 'NORMAL' : 'DOUBTFUL'
 
-  if(e.button == 0) clickVideo('NORMAL')
+  if (e.button == 0) clickVideo('NORMAL')
   else clickVideo('DOUBTFUL')
-  
+
   console.log(e.button)
   console.log(point.value)
   console.log(timeStamp.value)
@@ -293,15 +308,16 @@ onMounted(() => {
   const videoElement = document.getElementById('video-canvas')
   videoElement.addEventListener('mousedown', savePoint)
   videoElement.addEventListener('contextmenu', preventContextMenu)
-  if(!TimerMode) {
+  if (!TimerMode) {
     ctx.value = canvas.value.getContext('2d')
   }
   // 获取并处理数据流
   getStreamData()
   // setIamgeSrcTimer()
   // 设置画布处理器 计时器版本 每30ms一次渲染
-  if(TimerMode) {
+  if (TimerMode) {
     drawCanvas()
+    // setIamgeSrcTimer()
   }
   // drawCanvas()
   // 不设置计时器 根据后端传递的频率渲染画布
