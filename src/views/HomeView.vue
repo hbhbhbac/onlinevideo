@@ -5,52 +5,15 @@
 
 
   <div class="main-wrap">
-    <canvas ref="canvas" height="1080" width="1920" style='border:1px solid #d3d3d3; ' id="video-canvas">
+    <canvas ref="canvas" height="926" width="1920" style='border:1px solid #d3d3d3; ' id="video-canvas">
     </canvas>
-    <!-- <img id="img" /> -->
+    <!-- <img id="img" /> -->>
   </div>
 </template>
 <script setup>
 import { onBeforeUnmount, onMounted, ref, nextTick } from 'vue';
 import { VideoTrans } from '@/api/videotrans';
 import exifr from 'exifr'
-// import LogoImg from '../assets/logo.png'
-// import { VideoTrans } from '../api/videotrans'
-
-// const formMethod = () => {
-//     const url = 'http://152.136.213.16:8001/video/pull?stream_type=VIDEO&url=rtmp://152.136.213.16:1935/live/1111';
-//     const post_data = {
-//       // "csrfmiddlewaretoken": getCookie('csrftoken'),
-//       "key1": "value1",
-//       "key2": "value2",
-//     };
-//     let form = document.createElement("form");
-//     form.method = "POST";
-//     form.action = url;
-//     Object.keys(post_data).forEach(function (key){
-//       let element = document.createElement("input");
-//       element.name = key;
-//       element.value = post_data[key];
-//       form.appendChild(element);
-//     })
-//     document.body.appendChild(form);
-//     form.submit();
-// }
-
-// const nbMethod = () => {
-//   var xhr = new XMLHttpRequest();
-//   xhr.open('GET', 'http://152.136.213.16:8001/video/pull', true);
-//   xhr.responseType = 'blob';
-//   xhr.onreadystatechange = function () {
-//     if (xhr.readyState == 4 && xhr.status == 200) {
-//       // 处理数据流
-//       var blob = xhr.response;
-//       var url = URL.createObjectURL(blob);
-//       document.getElementById('img').src = url;
-//     }
-//   };
-//   xhr.send();
-// }
 
 var reader = null
 var stream = null
@@ -383,9 +346,10 @@ onBeforeUnmount(() => {
 </script>
 <style coped>
 .main-wrap {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 </style>
