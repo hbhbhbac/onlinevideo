@@ -110,8 +110,32 @@ const timer = ref(0)
 // var ctx = document.getElementById('test_canvas').getContext('2d');
 
 // 画布处理函数 每30ms绘制一次 并记录该图像的时间戳
+var imgElement
 const drawCanvas = () => {
   ctx.value = canvas.value.getContext('2d')
+  // imgElement = new Image()
+  // imgElement.src = "http://127.0.0.1:8000/api/video/pull?url=test.mp4"
+
+  // imgElement.onload = function () {
+  //   ctx.value.drawImage(imgElement, 0, 0);
+  //   var a = new Date()
+  //   console.log(a.getTime())
+  // };
+
+  // timer.value = window.setInterval(function refreshCanvas() {
+  //   ctx.value.drawImage(imgElement, 0, 0);
+  //   const dataURL = canvas.value.toDataURL();
+
+  //   // 使用 exifr 解析 base64 图像数据的 EXIF 信息
+  //   exifr.parse(dataURL).then(exifData => {
+  //     // 处理 exifData，例如获取时间戳等信息
+  //     console.log(exifData.DocumentName);
+  //   }).catch(error => {
+  //     // 处理解析错误
+  //     console.error(error);
+  //   });
+  // }, 10);
+
 
   timer.value = window.setInterval(function refreshCanvas() {
     var img = new Image();
@@ -138,6 +162,29 @@ const drawCanvas = () => {
     }
   }, 10);
 }
+
+const getExifData = (image) => {
+  // 创建一个 canvas 元素
+  const tempCanvas = document.createElement('canvas');
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCanvas.width = image.width;
+  tempCanvas.height = image.height;
+
+  // 将图像绘制到临时 canvas 上
+  tempCtx.drawImage(image, 0, 0);
+
+  // 将 canvas 转换为 base64 编码的字符串
+  const dataURL = tempCanvas.toDataURL();
+
+  // 使用 exifr 解析 base64 图像数据的 EXIF 信息
+  exifr.parse(dataURL).then(exifData => {
+    // 处理 exifData，例如获取时间戳等信息
+    console.log(exifData.DocumentName);
+  }).catch(error => {
+    // 处理解析错误
+    console.error(error);
+  });
+};
 
 const imgSrcTimer = ref()
 // 设置更新计时器 不行 会出现闪烁
@@ -173,8 +220,6 @@ const getStreamData = () => {
       const stream = response.body;
       // 获取读取器a
       reader = stream.getReader();
-      // 递归地从流中读取数据
-      // readStream();
       // 循环地从流中读取数据
       readStreamLoop()
     })
@@ -182,40 +227,6 @@ const getStreamData = () => {
       // 处理错误情况
       console.error(error);
     });
-
-  // fetch("http://127.0.0.1:8000/video/pull")
-  // // Retrieve its body as ReadableStream
-  // .then((response) => {
-  //   const reader = response.body.getReader();
-  //   console.log("reader", reader)
-  //   return new ReadableStream({
-  //     start(controller) {
-  //       return pump();
-  //       function pump() {
-  //         return reader.read().then(({ done, value }) => {
-  //           // When no more data needs to be consumed, close the stream
-  //           console.log(done, value)
-  //           if (done) {
-  //             controller.close();
-  //             return;
-  //           }
-  //           // Enqueue the next data chunk into our target stream
-  //           controller.enqueue(value);
-  //           return pump();
-  //         });
-  //       }
-  //     },
-  //   });
-  // })
-  // // Create a new response out of the stream
-  // .then((stream) => new Response(stream))
-  // // Create an object URL for the response
-  // .then((response) => response.blob())
-  // .then((blob) => 
-  //   URL.createObjectURL(blob))
-  // // Update image
-  // .then((url) => console.log((document.getElementById('img').src = url)))
-  // .catch((err) => console.error(err));
 }
 
 // 循环获取数据 避免长时间递归造成的信息爆栈
@@ -226,8 +237,6 @@ async function readStreamLoop() {
       // 如果流已经结束，跳出循环
       break;
     }
-    var date = new Date()
-    // console.log(value, 'value的长度', value.length, date.getTime())
     // 否则，继续处理数据
     const data = new Uint8Array(value);
     const index = indexOfSOI(data);
@@ -260,21 +269,6 @@ const drawCanvasAccrodingBackEnd = () => {
     });
     ctx.value.drawImage(img, 0, 0);
   };
-  // try {
-  //   img.onload = async () => {
-  //     exifr.parse(img).then(exifData => {
-  //       // 处理 exifData
-  //       timeStamp.value = exifData.DocumentName
-  //       // console.log('时间戳', exifData.ModifyDate)
-  //     });
-  //     ctx.value.drawImage(img, 0, 0);
-  //   };
-  // } catch (error) {
-  //   // 异常处理代码
-  //   console.log('异常:', error);
-  //   // 根据需要进行错误处理，例如显示错误信息给用户
-  //   // errorMessage.value = '发生了一个异常，请稍后重试';
-  // }
 }
 
 
