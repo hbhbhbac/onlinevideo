@@ -2,13 +2,15 @@
   <div class="main-wrap">
     <canvas ref="canvas" height="926" width="1920" style='border:1px solid #d3d3d3; ' id="video-canvas">
     </canvas>
-    <!-- <img id="img" /> -->>
+    <!-- <img id="img" src="http://127.0.0.1:8000/api/video/pull?url=test.mp4"/> -->
   </div>
   <div id="imageContainer"></div>
 </template>
 <script setup>
-import { onBeforeUnmount, onMounted, ref, nextTick } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { VideoTrans } from '@/api/videotrans';
+// 渲染间隔
+var gaptime = 30
 // 画布
 const canvas = ref()
 const ctx = ref(null)
@@ -23,7 +25,7 @@ const drawCanvas = () => {
   img.src = "http://127.0.0.1:8000/api/video/pull?url=test.mp4";
   window.setInterval(function refreshCanvas() {
     ctx.value.drawImage(img, 0, 0);
-  }, 30);
+  }, gaptime);
 }
 
 
