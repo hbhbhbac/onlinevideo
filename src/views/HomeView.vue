@@ -1,9 +1,4 @@
 <template>
-  <!-- <videoPlayer ref="videoPlayer" :options="playerOptions" class="vjs-custom-skin videoPlayer" :playsinline="true" />-->
-  <!-- <img id="img" src="http://152.136.213.16:8001/video/pull" /> -->
-  <!-- <img id="img" src="@/assets/logo.png" /> -->
-
-
   <div class="main-wrap">
     <canvas ref="canvas" height="926" width="1920" style='border:1px solid #d3d3d3; ' id="video-canvas">
     </canvas>
@@ -14,17 +9,13 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, nextTick } from 'vue';
 import { VideoTrans } from '@/api/videotrans';
-
 // 画布
 const canvas = ref()
 const ctx = ref(null)
+var img
 
 // 计时器 定时刷新画布
 const timer = ref(0)
-// var ctx = document.getElementById('test_canvas').getContext('2d');
-
-// 画布处理函数 每30ms绘制一次 并记录该图像的时间戳
-var img
 const drawCanvas = () => {
   ctx.value = canvas.value.getContext('2d')
   img = new Image();
