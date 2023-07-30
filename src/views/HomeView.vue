@@ -37,7 +37,6 @@ const indexOfSOI = (array) => {
 const imageUrl = ref('')
 const timeStamp = ref('')
 
-
 // 读取数据流
 const readStream = () => {
   reader.read().then(({ done, value }) => {
@@ -63,108 +62,48 @@ const readStream = () => {
   });
 }
 
-
 // 画布
 const canvas = ref()
 const ctx = ref(null)
 
 // 计时器 定时刷新画布
 const timer = ref(0)
-// var ctx = document.getElementById('test_canvas').getContext('2d');
+
+var img
 
 // 画布处理函数 每30ms绘制一次 并记录该图像的时间戳
-var imgElement
 const drawCanvas = () => {
   ctx.value = canvas.value.getContext('2d')
-  // imgElement = new Image()
-  // imgElement.src = "http://127.0.0.1:8000/api/video/pull?url=test.mp4"
+  img = new Image();
+  img.onload = function () {
+    ctx.value.drawImage(img, 0, 0);
+    console.log('img.onload')
+    exifr.parse(img).then((exifData) => {
+      console.log(exifData)
+    }).catch((err) => {
+      console.log(err)
+    })
+  };
 
-  // imgElement.onload = function () {
-  //   ctx.value.drawImage(imgElement, 0, 0);
-  //   var a = new Date()
-  //   console.log(a.getTime())
-  // };
+  img.src = "http://127.0.0.1:8000/api/video/pull?url=test.mp4";
+  timer.value = window.setInterval(function refreshCanvas() { ctx.value.drawImage(img, 0, 0);}, 40);
+
 
   // timer.value = window.setInterval(function refreshCanvas() {
-  //   ctx.value.drawImage(imgElement, 0, 0);
-  //   const dataURL = canvas.value.toDataURL();
+  //   img.src = imageUrl.value;
 
-  //   // 使用 exifr 解析 base64 图像数据的 EXIF 信息
-  //   exifr.parse(dataURL).then(exifData => {
-  //     // 处理 exifData，例如获取时间戳等信息
-  //     console.log(exifData.DocumentName);
-  //   }).catch(error => {
-  //     // 处理解析错误
-  //     console.error(error);
-  //   });
-  // }, 10);
-
-
-  timer.value = window.setInterval(function refreshCanvas() {
-    var img = new Image();
-    img.src = imageUrl.value;
-
-    try {
-      var a = new Date()
-      // console.log(a.getTime())
-      img.onload = async () => {
-        exifr.parse(img).then(exifData => {
-          // 处理 exifData
-          timeStamp.value = exifData.DocumentName
-          var b = new Date()
-          // console.log(b.getTime())
-          // console.log('时间戳', exifData.ModifyDate)
-        });
-        ctx.value.drawImage(img, 0, 0);
-      };
-    } catch (error) {
-      // 异常处理代码
-      console.log('异常:', error);
-      // 根据需要进行错误处理，例如显示错误信息给用户
-      // errorMessage.value = '发生了一个异常，请稍后重试';
-    }
-  }, 10);
+  //   try {
+  //     img.onload = async () => {
+  //       ctx.value.drawImage(img, 0, 0);
+  //     };
+  //   } catch (error) {
+  //     // 异常处理代码
+  //     console.log('异常:', error);
+  //   }
+  // }, 40);
 }
-
-const getExifData = (image) => {
-  // 创建一个 canvas 元素
-  const tempCanvas = document.createElement('canvas');
-  const tempCtx = tempCanvas.getContext('2d');
-  tempCanvas.width = image.width;
-  tempCanvas.height = image.height;
-
-  // 将图像绘制到临时 canvas 上
-  tempCtx.drawImage(image, 0, 0);
-
-  // 将 canvas 转换为 base64 编码的字符串
-  const dataURL = tempCanvas.toDataURL();
-
-  // 使用 exifr 解析 base64 图像数据的 EXIF 信息
-  exifr.parse(dataURL).then(exifData => {
-    // 处理 exifData，例如获取时间戳等信息
-    console.log(exifData.DocumentName);
-  }).catch(error => {
-    // 处理解析错误
-    console.error(error);
-  });
-};
-
-const imgSrcTimer = ref()
-// 设置更新计时器 不行 会出现闪烁
-const setIamgeSrcTimer = () => {
-  imgSrcTimer.value = window.setInterval(() => {
-    document.getElementById('img').src = imageUrl.value
-  }, 30);
-}
-
 // 点击事件发生 修改行李箱状态
-const clickVideo = (type) => {
-  var data = {
-    frameId: timeStamp.value,
-    result: type,
-    height: point.value.y,
-    width: point.value.x
-  }
+const clickVideo = (data) => {
   console.log(data)
   VideoTrans.ClickVideo(data).then((res) => {
     console.log('点击视频后端接收到的参数', data, '后端返回的结果', res)
@@ -174,7 +113,7 @@ const clickVideo = (type) => {
   })
 }
 
-// 流式接收数据函数
+// // 流式接收数据函数
 const getStreamData = () => {
   http://152.136.213.16:8001/video/pull?url=rtmp://152.136.213.16:1935/live/test
   fetch("http://127.0.0.1:8000/api/video/pull?url=test.mp4")
@@ -200,22 +139,25 @@ async function readStreamLoop() {
       // 如果流已经结束，跳出循环
       break;
     }
-    // 否则，继续处理数据
-    const data = new Uint8Array(value);
-    const index = indexOfSOI(data);
-    if (index > -1) {
-      // 获取index之后的信息并转换为图像
-      const blob = new Blob([data.slice(index)], {
-        type: "image/jpeg",
-      });
-      stream = URL.createObjectURL(blob);
-      imageUrl.value = stream
+    console.log(value, 'value的长度', value.length)
+    stream = URL.createObjectURL(value);
+    imageUrl.value = stream
+    // // 否则，继续处理数据
+    // const data = new Uint8Array(value);
+    // const index = indexOfSOI(data);
+    // if (index > -1) {
+    //   // 获取index之后的信息并转换为图像
+    //   const blob = new Blob([data.slice(index)], {
+    //     type: "image/jpeg",
+    //   });
+    //   stream = URL.createObjectURL(blob);
+    //   imageUrl.value = stream
 
-      // 根据后端传输的速率绘制画布
-      if (!TimerMode) {
-        drawCanvasAccrodingBackEnd()
-      }
-    }
+    //   // 根据后端传输的速率绘制画布
+    //   if (!TimerMode) {
+    //     drawCanvasAccrodingBackEnd()
+    //   }
+    // }
   }
 }
 
@@ -234,24 +176,23 @@ const drawCanvasAccrodingBackEnd = () => {
   };
 }
 
-
-// 记录鼠标坐标
-const point = ref({ x: 0, y: 0, type: 'NORMAL' })
-
-// 获取鼠标坐标
+// 获取鼠标坐标和解析的时间戳
 const savePoint = (e) => {
   e.preventDefault() // 阻止默认右键菜单的弹出
 
-  point.value.x = e.pageX
-  point.value.y = e.pageY
-  point.value.type = e.button == 0 ? 'NORMAL' : 'DOUBTFUL'
+  var data = {}
+  console.log('click', img)
+  exifr.parse(img).then(exifData => {
+    // 处理 exifData
+    data.frameId = exifData.DocumentName
+    data.width = e.pageX
+    data.height = e.pageY
+    data.result = e.button == 0 ? 'NORMAL' : 'DOUBTFUL'
 
-  if (e.button == 0) clickVideo('NORMAL')
-  else clickVideo('DOUBTFUL')
-
-  console.log(e.button)
-  console.log(point.value)
-  console.log(timeStamp.value)
+    console.log(data)
+    // console.log('时间戳', exifData.ModifyDate)
+  });
+  // clickVideo(data)
 }
 
 // 阻止默认右键菜单的弹出
@@ -265,84 +206,17 @@ onMounted(() => {
   const videoElement = document.getElementById('video-canvas')
   videoElement.addEventListener('mousedown', savePoint)
   videoElement.addEventListener('contextmenu', preventContextMenu)
-  if (!TimerMode) {
-    ctx.value = canvas.value.getContext('2d')
-  }
   // 获取并处理数据流
-  getStreamData()
-  // setIamgeSrcTimer()
+  // getStreamData()
   // 设置画布处理器 计时器版本 每30ms一次渲染
-  if (TimerMode) {
-    drawCanvas()
-    // setIamgeSrcTimer()
-  }
-  // drawCanvas()
-  // 不设置计时器 根据后端传递的频率渲染画布
-  // var imgEl = document.getElementById('image')
-  // imgEl.onload = function (e) {
-  //   console.log(e, 'success')
-  //   console.log(imgEl.complete)
-  // }
-  // imgEl.onerror = function (e) {
-  //   console.log(e, 'fail')
-  //   console.log(imgEl.complete) // true
-  // }
-  // VideoTrans.getVideo({}).then((res) => {
-  //   console.log('axios请求返回', res)
-  // }).catch((err) => {
-  //   console.log(err)
-  // })
-  // nbMethod()
-
-
-
-  // var ctx = document.getElementById('test_canvas').getContext('2d');
-  // var img = new Image();
-  // img.onload = function () {
-  //   ctx.drawImage(img, 0, 0)
-  // };
-
-  // img.src = "http://152.136.213.16:8001/video/pull?stream_type=VIDEO&url=rtmp://152.136.213.16:1935/live/1111";
-  // window.setInterval(refreshCanvas(), 10);
-
-  // function refreshCanvas() {
-  //   ctx.drawImage(img, 0, 0);
-  // }
+  drawCanvas()
 })
 
 onBeforeUnmount(() => {
-  // window.removeEventListener('click', savePoint)
   window.clearInterval(imgSrcTimer.value)
   window.clearInterval(timer.value)
 })
 
-// const refreshCanvas = () => {
-//   ctx.drawImage(img, 0, 0);
-// }
-
-// const playerOptions = ref({
-//   playbackRates: [0.7, 1.0, 1.5, 2.0], //播放速度
-//   autoplay: false, //如果true,浏览器准备好时开始回放。
-//   muted: false, // 默认情况下将会消除任何音频。
-//   loop: false, // 导致视频一结束就重新开始。
-//   preload: 'auto', // 建议浏览器在<video>加载元素后是否应该开始下载视频数据。auto浏览器选择最佳行为,立即开始加载视频（如果浏览器支持）
-//   language: 'zh-CN',
-//   aspectRatio: '16:9', // 将播放器置于流畅模式，并在计算播放器的动态大小时使用该值。值应该代表一个比例 - 用冒号分隔的两个数字（例如"16:9"或"4:3"）
-//   techOrder: ['flash', 'html5'],      // 兼容顺序
-//   sources: [{ // 流配置，数组形式，会根据兼容顺序自动切换
-//     type: 'rtmp/hls',
-//     src: 'rtmp://58.200.131.2:1935/livetv/hunantv'
-//   }],
-//   poster: "", //你的封面地址
-//   // width: document.documentElement.clientWidth,
-//   notSupportedMessage: '此视频暂无法播放，请稍后再试', // 允许覆盖Video.js无法播放媒体源时显示的默认信息。
-//   controlBar: {
-//     timeDivider: true,
-//     durationDisplay: true,
-//     remainingTimeDisplay: false,
-//     fullscreenToggle: true  //全屏按钮
-//   }
-// })
 </script>
 <style coped>
 .main-wrap {
