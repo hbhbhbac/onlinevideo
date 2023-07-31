@@ -9,8 +9,6 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { VideoTrans } from '@/api/videotrans';
-// 渲染间隔
-var gaptime = 30
 // 画布
 const canvas = ref()
 const ctx = ref(null)
@@ -22,10 +20,10 @@ const drawCanvas = () => {
   ctx.value = canvas.value.getContext('2d')
   img = new Image();
 
-  img.src = "http://127.0.0.1:8000/api/video/pull?url=test.mp4";
+  img.src = "http://127.0.0.1:8000/api/video/pull?url=test.mp4?ttl=30";
   window.setInterval(function refreshCanvas() {
     ctx.value.drawImage(img, 0, 0);
-  }, gaptime);
+  }, 30);
 }
 
 
