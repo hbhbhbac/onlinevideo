@@ -10,6 +10,7 @@ import { VideoTrans } from '@/api/videotrans';
 // 点击事件发生 修改行李箱状态
 const clickVideo = (data) => {
   const startTime = new Date().getTime(); // 获取点击事件发生的时间戳
+  console.log(data)
   VideoTrans.ClickVideo(data).then((res) => {
     const endTime = new Date().getTime(); // 获取后端响应返回的时间戳
     const duration = endTime - startTime; // 计算前后端传输的耗时
@@ -24,8 +25,8 @@ const clickVideo = (data) => {
 function savePoint(e) {
   var data = {};
 
-  data.width = e.pageX;
-  data.height = e.pageY;
+  data.width = e.offsetX;
+  data.height = e.offsetY;
   data.result = e.button == 0 ? 'NORMAL' : 'DOUBTFUL';
 
   clickVideo(data);
@@ -59,5 +60,9 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+#img {
+  border: 1px solid black;
 }
 </style>
