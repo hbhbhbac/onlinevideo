@@ -7,6 +7,11 @@ const routes = [
     name: 'home',
     component: HomeView
   },
+  {
+    path: '/framevideo',
+    name: 'framevideo',
+    component: () => import(/* webpackChunkName: "framevideo" */ '../views/FrameVideo.vue')
+  }
 ]
 
 const router = createRouter({
